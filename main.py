@@ -8,15 +8,15 @@ class Cardioid:
         self.radius = 600
         self.num_lines = self.app.frequency * 5
         self.angle_offset = 0
-        self.colors = ['red', 'green', 'blue', 'yellow', 'cyan', 'magenta']  # List of colors
+        self.colors = ['red', 'green', 'blue', 'yellow', 'cyan', 'magenta']  
 
     def update(self):
-        sound_value = self.app.get_sound_value()  # Get the current sound value from the App class
+        sound_value = self.app.get_sound_value() 
         frequency = self.app.frequency  
 
-        # Adjust the movement parameters based on the frequency
-        x_offset = frequency * 0.12  # Scaling factor for x-coordinate
-        y_offset = frequency * 0.12  # Scaling factor for y-coordinate
+      
+        x_offset = frequency * 0.12 
+        y_offset = frequency * 0.12  
 
         self.x_offset = x_offset
         self.y_offset = y_offset
@@ -44,20 +44,20 @@ class App:
         self.screen = pg.display.set_mode([self.screen_width, self.screen_height])
         self.clock = pg.time.Clock()
         self.cardioid = Cardioid(self)
-        self.current_color_index = 0  # Index of the current color in the list
+        self.current_color_index = 0 
 
         # Initialize Pyo audio server
         self.server = Server(audio='portaudio', duplex=0, nchnls=2).boot()
         self.server.start()
-        self.release_time = 0.1  # Duration of the fade-out in seconds
+        self.release_time = 0.1 
         self.release_frames = int(self.release_time * self.server.getSamplingRate())
 
-        # Chromatic keyboard parameters
+
         self.key_notes = ['z', 's', 'x', 'd', 'c', 'v', 'g', 'b', 'h', 'n', 'j', 'm', 'q', '2', 'w', '3', 'e', 'r', '5', 't', '6', 'y', '7', 'u', 'i', '9', 'o', '0', 'p', '[', '=', ']', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', "'", '\\', '`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', "'", 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/']
         self.key_pressed = set()
         modfrequency = self.frequency * 10
 
-        # Create envelope for the sound
+
         self.env = Adsr(attack=0.5, decay=0.8, sustain=0, release=0.8)
 
         # Create FM synthesis objects
@@ -66,13 +66,12 @@ class App:
         self.modulator = Sine(freq=self.modulator_freq, mul=1000 * self.env)
         self.fm = FM(carrier=self.carrier, ratio=self.modulator, mul=self.env / 2)
 
-        # Connect FM synthesis object to the audio output
         self.out = self.fm.mix(2).out()
 
-        # Create GUI manager
+    
         self.gui_manager = pygame_gui.UIManager((self.screen_width, self.screen_height))
 
-        # Create slider
+  
         slider_rect = pg.Rect(50, 50, 200, 20)
         self.frequency_slider = pygame_gui.elements.UIHorizontalSlider(
             relative_rect=slider_rect,
@@ -102,10 +101,10 @@ class App:
         for note_index in self.key_pressed:
             frequency = self.get_note_frequency(note_index)
             self.set_frequency(frequency)
-            self.env.play()  # Start the envelope
-            self.fm.play()  # Start the FM synthesis
+            self.env.play() 
+            self.fm.play() 
 
-        # Apply exponential fade-out to the amplitude of the envelope
+       
         if not self.key_pressed:
             release_frames = int(self.release_time * self.server.getSamplingRate())
             self.env.release = self.release_time
@@ -121,15 +120,15 @@ class App:
 
     def stop_notes(self):
         for note_index in self.key_pressed:
-            self.env.stop()  # Stop the envelope
-            self.fm.stop()  # Stop the FM synthesis
+            self.env.stop()  
+            self.fm.stop()  
 
     def draw(self):
         self.screen.fill('white')
-        self.cardioid.update()  # Update the visualization based on the sound value
+        self.cardioid.update()  
         self.cardioid.draw()
 
-        # Draw GUI elements
+    
         self.gui_manager.update(self.clock.tick(60) / 1000.0)
         self.gui_manager.draw_ui(self.screen)
 
@@ -141,7 +140,7 @@ class App:
                 note_index = self.key_notes.index(chr(event.key).lower())
                 self.key_pressed.add(note_index)
 
-                # Update the current color index to show a new color
+                
                 self.current_color_index = (self.current_color_index + 1) % len(self.cardioid.colors)
 
         if event.type == pg.KEYUP:
@@ -150,7 +149,7 @@ class App:
                 self.key_pressed.discard(note_index)
 
                 if not self.key_pressed:
-                    # Start the release phase if no notes are currently held
+                    
                     self.release_frames = int(self.release_time * self.server.getSamplingRate())
 
 
@@ -174,13 +173,13 @@ class App:
                 elif event.type in (pg.KEYDOWN, pg.KEYUP):
                     self.handle_key_event(event)
 
-                # Pass events to GUI manager
+         
                 self.gui_manager.process_events(event)
                 self.handle_slider_event(event)
 
             self.gui_manager.update(self.clock.tick(60) / 1000.0)
 
-        # Stop the envelope and the server
+
         self.env.stop()
         self.server.stop()
 
